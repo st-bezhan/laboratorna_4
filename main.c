@@ -16,6 +16,23 @@ unsigned int validate_input(const char* formatSpecifier, void* value, char messa
         }
     } while (1);
 }
+unsigned int define_action() {
+    unsigned int action_variant = 0;
+    do {
+        printf("\nSelect action:"
+           "\n[1] Find minimal and maximal values higher than main diagonal of matrix A"
+           "\n[2] Transpose matrix B"
+           "\n[3] Multiply matrix A by matrix B"
+           "\n[4] Sort elements of A"
+           "\n[5] Show sum of A rows and B columns"
+           "\n[6] Exit\n");
+        validate_input("%u", &action_variant, "");
+    } while (action_variant != 1 && action_variant != 2 &&
+        action_variant != 3 && action_variant != 4 &&
+        action_variant != 5 && action_variant != 6);
+
+    return action_variant;
+}
 double** initialize_array(const int rows, const int columns) {
     double** array = calloc(rows, sizeof(double*));
     for (unsigned i = 0; i < rows; i++) {
@@ -105,50 +122,62 @@ void max_min(double** array, const int rows, const int columns) {
         printf("\nThis matrix doesn't have a main diagonal.\n");
     }
 }
-double** multiply(double** array_a, const int rows, const int columns) {
-    const int b_rows = init_rows();
-    const int b_columns = init_columns();
-    double** array_b = initialize_array(b_rows, b_columns);
-    fill_array(array_b, b_rows, b_columns);
+double** multiply(double** array_a, const int rows_a, const int columns_a, double** array_b, const int rows_b, const int columns_b) {
+    validate_array(array_a);
     validate_array(array_b);
-    if (columns == b_rows) {
-        double** multiplication_result = initialize_array(rows, b_columns);
-        for (unsigned int row = 0; row < rows; row++) {
-            for (unsigned int column = 0; column < b_columns; column++) {
-                for (unsigned int k = 0; k < columns; k++) {
+    if (columns_a == rows_b) {
+        double** multiplication_result = initialize_array(rows_a, columns_b);
+        for (unsigned int row = 0; row < rows_a; row++) {
+            for (unsigned int column = 0; column < columns_b; column++) {
+                for (unsigned int k = 0; k < columns_a; k++) {
                     multiplication_result[row][column] += array_a[row][k] * array_b[k][column];
                 }
             }
         }
 
-        print_array(multiplication_result, rows, b_columns);
         return multiplication_result;
     } else {
         printf("\nThese matricies cannot be multiplied:"
-               " Matrix A[%u*%u] Matrix B[%u*%u]", rows, columns, b_rows, b_columns);
+               " Matrix A[%u*%u] Matrix B[%u*%u]", rows_a, columns_a, rows_b, columns_b);
         exit(1);
     }
 }
 
 int main(void) {
-    int rows = init_rows();
-    int columns = init_columns();
 
-    double** array = initialize_array(rows, columns);
-    fill_array(array, rows, columns);
+    int rows_a = init_rows();
+    int columns_a = init_columns();
+    int rows_b = init_rows();
+    int columns_b = init_columns();
+    double** array_a = initialize_array(rows_a, columns_a);
+    double** array_b = initialize_array(rows_b, columns_b);
 
-    printf("\nOriginal matrix:\n");
-    print_array(array, rows, columns);
-
-    double** trans = transpose(array, rows, columns);
-    printf("\nTransposed matrix:\n");
-    print_array(trans, columns, rows);
-
-    max_min(array, rows, columns);
-    multiply(array, rows, columns);
-
-    free_array(array, rows);
-    free_array(trans, columns);
+    while (1) {
+        unsigned int action = define_action();
+        switch (action) {
+            case 1:
+                print_array(array_a, rows_a, columns_a);
+                max_min(array_a, rows_a, columns_a);
+                break;
+            case 2:
+                print_array(array_b, rows_b, columns_b);
+                double** transposed = transpose(array_b, rows_b, columns_b);
+                print_array(transposed, rows_b, columns_b);
+                free_array(transposed, rows_b);
+                break;
+            case 3:
+                print_array(array_a, rows_a, columns_a);
+                print_array(array_b, rows_b, columns_b);
+                double** multiplicated = multiply(array_a, rows_a, columns_a, array_b, rows_b, columns_b);
+                print_array(multiplicated, rows_a, columns_b);
+                free_array(multiplicated, rows_a);
+                break;
+            case 6:
+                free_array(array_a, rows_a);
+                free_array(array_b, rows_b);
+                exit(0);
+        }
+    }
 
     return 0;
 }
